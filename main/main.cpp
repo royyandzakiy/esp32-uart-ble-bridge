@@ -1,15 +1,10 @@
 
 /**
- * ESP32-UART-BLE-BRIDGE
- * This is a simple project which uses and ESP32 to communicate with another device 
- * (not necessarily an Android Phone) through BLE Communication. The way it works is 
- * by using BLE as a simulated "UART Bridge", which give similair outputs, but is 
- * developed using the BLE standards, such as using server-client and service callbacks. 
+ * ESP32: UART-BLE Bridge
+ * This is a simple project which uses and ESP32 to act as a bridge to communicate messages received from a UART sender towards a BLE Client receiver, and vice versa. 
  * 
  * Communication Diagram:
  * Arduino -- (UART) -- ESP32 -- (BLE) -- Android
- * 
- * The communication happens from either side.
  **/
 
 #include <Arduino.h>
