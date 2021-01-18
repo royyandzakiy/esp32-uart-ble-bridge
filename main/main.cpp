@@ -1,6 +1,6 @@
 
 /**
- * ESP32-BLE-ANDROID
+ * ESP32-UART-BLE-BRIDGE
  * This is a simple project which uses and ESP32 to communicate with another device 
  * (not necessarily an Android Phone) through BLE Communication. The way it works is 
  * by using BLE as a simulated "UART Bridge", which give similair outputs, but is 
@@ -8,6 +8,8 @@
  * 
  * Communication Diagram:
  * Arduino -- (UART) -- ESP32 -- (BLE) -- Android
+ * 
+ * The communication happens from either side.
  **/
 
 #include <Arduino.h>
@@ -31,6 +33,7 @@ bool oldDeviceConnected = false;
 
 void setupBLE();
 void loop();
+void sendBLE(String);
 
 // This callback is called whenever the Android sends a message through the CHARACTERISTIC_UUID_RX
 class CharacteristicRXCallback: public BLECharacteristicCallbacks {
@@ -39,7 +42,9 @@ class CharacteristicRXCallback: public BLECharacteristicCallbacks {
         String rxValue = characteristic->getValue().c_str(); 
         // verify that the value is more than 0
         if (rxValue.length() > 0) {
-            Serial.println(rxValue);
+            // print received messages from Android App into serial and to the Arduino
+            Log.println(rxValue);
+            ArduinoSerial.println(rxValue);
         }
     }//onWrite
 };
@@ -47,14 +52,14 @@ class CharacteristicRXCallback: public BLECharacteristicCallbacks {
 void connectedTask(void *param) {
     for(;;) {
         if (deviceConnected) {
-            // do somthing when device is connected
-            
+            // do somthing when device is connected          
             if(ArduinoSerial.available()) {
-                // listen to any messages coming in from Arduino which is connected to the ESP32 through UART
+                // listen to any messages coming in from Arduino which is connected to the ESP32 through UART. Print received messages to Log and BLE Client
                 String message = ArduinoSerial.readStringUntil('\n');
                 Log.println(message);
+                sendBLE(message);
             }
-        } 
+        }
         
         // conncetion management
         if (!deviceConnected && oldDeviceConnected) {
@@ -75,17 +80,16 @@ extern "C" void app_main()
 {
     Log.begin(115200);
     ArduinoSerial.begin(115200);
+    
     setupBLE();
     Log.println("Setup done");
+
     while(1) loop();
 }
 
 void loop() {
     if (deviceConnected) {
-        String str = "";
-        const char *txString = str.c_str();
-        characteristicTX->setValue(txString);
-        characteristicTX->notify();
+        // do something
     }
     delay(1000);
 }
@@ -96,23 +100,22 @@ void setupBLE() {
  
     // Create the NimBLE Server
     myServer = NimBLEDevice::createServer();
-    myServer->setCallbacks(new BLEServerCallbacks());
+    myServer->setCallbacks(new ServerCallbacks());
  
     // Create the NimBLE Service
     NimBLEService *myService = myServer->createService(SERVICE_UUID);
  
-    // Create a NimBLE Characteristic
+    // Create characteristicTX to send messages to BLE Client (Android App)
+    // Create characteristicRX to receive messages to BLE Client (Android App)
     characteristicTX = myService->createCharacteristic(
                        CHARACTERISTIC_UUID_TX,
                        NIMBLE_PROPERTY::NOTIFY
                      );
- 
-    // characteristicTX->addDescriptor(new NimBLE2902());
-
     BLECharacteristic *characteristicRX = myService->createCharacteristic(
                         CHARACTERISTIC_UUID_RX,
                         NIMBLE_PROPERTY::WRITE
                     );
+    // characteristicTX->addDescriptor(new NimBLE2902());
  
     characteristicRX->setCallbacks(new CharacteristicRXCallback());
  
@@ -127,12 +130,20 @@ void setupBLE() {
     myAdvertising->start();
 }
 
+void sendBLE(String msg) {
+    const char *txString = msg.c_str();
+    characteristicTX->setValue(txString);
+    characteristicTX->notify();
+}
+
 class ServerCallbacks: public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer) {
         deviceConnected = true;
+        Log.println("device connected.");
     };
  
     void onDisconnect(NimBLEServer* pServer) {
          deviceConnected = false;
+        Log.println("device disconnected.");
     }
 };
