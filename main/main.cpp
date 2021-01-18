@@ -34,6 +34,7 @@ bool oldDeviceConnected = false;
 void setupBLE();
 void loop();
 void sendBLE(String);
+void sendUART(String);
 
 // This callback is called whenever the Android sends a message through the CHARACTERISTIC_UUID_RX
 class CharacteristicRXCallback: public BLECharacteristicCallbacks {
@@ -44,7 +45,7 @@ class CharacteristicRXCallback: public BLECharacteristicCallbacks {
         if (rxValue.length() > 0) {
             // print received messages from Android App into serial and to the Arduino
             Log.println(rxValue);
-            ArduinoSerial.println(rxValue);
+            sendUART(rxValue);
         }
     }//onWrite
 };
@@ -90,6 +91,10 @@ extern "C" void app_main()
 void loop() {
     if (deviceConnected) {
         // do something
+        if (Serial.available()) {
+            String message = Serial.readStringUntil('\n');
+            Log.println(message);
+        }
     }
     delay(1000);
 }
@@ -117,7 +122,7 @@ void setupBLE() {
                     );
     // characteristicTX->addDescriptor(new NimBLE2902());
  
-    characteristicRX->setCallbacks(new CharacteristicRXCallback());
+    characteristicRX->setCallbacks(new CharacteristicRXCallback()); // callbacks enable one to react of ble events such as characteristic write
  
     // Start the service
     myService->start();
@@ -130,9 +135,13 @@ void setupBLE() {
     myAdvertising->start();
 }
 
+void sendUART(String msg) {
+    ArduinoSerial.println(msg);
+}
+
 void sendBLE(String msg) {
-    const char *txString = msg.c_str();
-    characteristicTX->setValue(txString);
+    const char *msgchar = msg.c_str();
+    characteristicTX->setValue(msgchar);
     characteristicTX->notify();
 }
 
