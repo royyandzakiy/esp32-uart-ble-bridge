@@ -90,10 +90,11 @@ extern "C" void app_main()
 
 void loop() {
     if (deviceConnected) {
-        // do something
         if (Serial.available()) {
+            // if user write anything in Serial Monitor, echo it to BLE Client
             String message = Serial.readStringUntil('\n');
             Log.println(message);
+            sendBLE(message);
         }
     }
     delay(1000);
@@ -111,7 +112,7 @@ void setupBLE() {
     NimBLEService *myService = myServer->createService(SERVICE_UUID);
  
     // Create characteristicTX to send messages to BLE Client (Android App)
-    // Create characteristicRX to receive messages to BLE Client (Android App)
+    // Create characteristicRX to receive messages from BLE Client (Android App)
     characteristicTX = myService->createCharacteristic(
                        CHARACTERISTIC_UUID_TX,
                        NIMBLE_PROPERTY::NOTIFY
