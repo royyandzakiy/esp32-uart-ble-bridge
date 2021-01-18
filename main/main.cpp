@@ -1,3 +1,15 @@
+
+/**
+ * ESP32-BLE-ANDROID
+ * This is a simple project which uses and ESP32 to communicate with another device 
+ * (not necessarily an Android Phone) through BLE Communication. The way it works is 
+ * by using BLE as a simulated "UART Bridge", which give similair outputs, but is 
+ * developed using the BLE standards, such as using server-client and service callbacks. 
+ * 
+ * Communication Diagram:
+ * Arduino -- (UART) -- ESP32 -- (BLE) -- Android
+ **/
+
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <NimBLEDevice.h>
@@ -10,7 +22,7 @@
 #define CHARACTERISTIC_UUID_TX "0972EF8C-7613-4075-AD52-756F33D4DA91"
 
 HardwareSerial Log(1);
-HardwareSerial Messenger(2);
+HardwareSerial ArduinoSerial(2);
 
 NimBLEServer *myServer = NULL;
 BLECharacteristic *characteristicTX = NULL;
@@ -20,10 +32,10 @@ bool oldDeviceConnected = false;
 void setupBLE();
 void loop();
 
-//callback para eventos das características
-class CharacteristicCallbacks: public BLECharacteristicCallbacks {
+// This callback is called whenever the Android sends a message through the CHARACTERISTIC_UUID_RX
+class CharacteristicRXCallback: public BLECharacteristicCallbacks {
      void onWrite(BLECharacteristic *characteristic) {
-        // read value sent through BLE
+        // read value sent through BLE by Android
         String rxValue = characteristic->getValue().c_str(); 
         // verify that the value is more than 0
         if (rxValue.length() > 0) {
@@ -36,8 +48,10 @@ void connectedTask(void *param) {
     for(;;) {
         if (deviceConnected) {
             // do somthing when device is connected
-            if(Messenger.available()) {
-                String message = Messenger.readStringUntil('\n');
+            
+            if(ArduinoSerial.available()) {
+                // listen to any messages coming in from Arduino which is connected to the ESP32 through UART
+                String message = ArduinoSerial.readStringUntil('\n');
                 Log.println(message);
             }
         } 
@@ -48,7 +62,7 @@ void connectedTask(void *param) {
             printf("start advertising\n");
             oldDeviceConnected = deviceConnected;
         }
-        
+
         if (deviceConnected && !oldDeviceConnected) {
             oldDeviceConnected = deviceConnected;
         }
@@ -57,14 +71,10 @@ void connectedTask(void *param) {
     vTaskDelete(NULL);
 }
 
-/**
- * This program is used to be a bridge to communicate the main arduino nano
- * with the Android Gateway App 
- **/
 extern "C" void app_main()
 {
     Log.begin(115200);
-    Messenger.begin(115200);
+    ArduinoSerial.begin(115200);
     setupBLE();
     Log.println("Setup done");
     while(1) loop();
@@ -104,7 +114,7 @@ void setupBLE() {
                         NIMBLE_PROPERTY::WRITE
                     );
  
-    characteristicRX->setCallbacks(new CharacteristicCallbacks());
+    characteristicRX->setCallbacks(new CharacteristicRXCallback());
  
     // Start the service
     myService->start();
