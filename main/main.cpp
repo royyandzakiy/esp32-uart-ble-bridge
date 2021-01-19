@@ -31,6 +31,18 @@ void loop();
 void sendBLE(String);
 void sendUART(String);
 
+class ServerCallbacks: public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer) {
+        deviceConnected = true;
+        Log.println("device connected.");
+    };
+ 
+    void onDisconnect(NimBLEServer* pServer) {
+         deviceConnected = false;
+        Log.println("device disconnected.");
+    }
+};
+
 // This callback is called whenever the Android sends a message through the CHARACTERISTIC_UUID_RX
 class CharacteristicRXCallback: public BLECharacteristicCallbacks {
      void onWrite(BLECharacteristic *characteristic) {
@@ -99,11 +111,9 @@ void setupBLE() {
     // Create the BLE Device
     NimBLEDevice::init("Waterbox");
  
-    // Create the NimBLE Server
+    // Create the NimBLE Server, set Callbacks, create & set Service
     myServer = NimBLEDevice::createServer();
     myServer->setCallbacks(new ServerCallbacks());
- 
-    // Create the NimBLE Service
     NimBLEService *myService = myServer->createService(SERVICE_UUID);
  
     // Create characteristicTX to send messages to BLE Client (Android App)
@@ -140,15 +150,3 @@ void sendBLE(String msg) {
     characteristicTX->setValue(msgchar);
     characteristicTX->notify();
 }
-
-class ServerCallbacks: public NimBLEServerCallbacks {
-    void onConnect(NimBLEServer* pServer) {
-        deviceConnected = true;
-        Log.println("device connected.");
-    };
- 
-    void onDisconnect(NimBLEServer* pServer) {
-         deviceConnected = false;
-        Log.println("device disconnected.");
-    }
-};
