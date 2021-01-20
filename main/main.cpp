@@ -121,7 +121,7 @@ void setupBLE() {
     characteristicTX = myService->createCharacteristic(
                        CHARACTERISTIC_UUID_TX,
                        NIMBLE_PROPERTY::NOTIFY
-             btw         );
+                    );
     BLECharacteristic *characteristicRX = myService->createCharacteristic(
                         CHARACTERISTIC_UUID_RX,
                         NIMBLE_PROPERTY::WRITE
