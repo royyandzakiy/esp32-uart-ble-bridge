@@ -1,0 +1,7 @@
+[submodule "components/esp-nimble-cpp"]
+	path = components/esp-nimble-cpp
+	url = https://github.com/h2zero/esp-nimble-cpp
+[submodule "components/arduino-esp32"]
+	path = components/arduino-esp32
+	url = https://github.com/espressif/arduino-esp32
+	branch = idf-release/v4.0
