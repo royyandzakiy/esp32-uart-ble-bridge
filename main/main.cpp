@@ -66,7 +66,7 @@ void connectedTask(void *param) {
             // listen to any messages coming in from Arduino which is connected to the ESP32 through UART. Print received messages to Log and BLE Client
             String message = ArduinoSerial.readStringUntil('\n');
             Log.println(message);
-            
+
             if (deviceConnected) {
             // do somthing when device is connected          
                 sendBLE(message);
@@ -135,12 +135,19 @@ void setupBLE() {
                     );
     BLECharacteristic *characteristicRX = myService->createCharacteristic(
                         CHARACTERISTIC_UUID_RX,
-                        NIMBLE_PROPERTY::WRITE
+                        NIMBLE_PROPERTY::READ   |
+                        NIMBLE_PROPERTY::WRITE  |
+                        NIMBLE_PROPERTY::NOTIFY
                     );
     // characteristicTX->addDescriptor(new NimBLE2902());
  
     characteristicRX->setCallbacks(new CharacteristicRXCallback()); // callbacks enable one to react of ble events such as characteristic write
  
+    characteristicTX->setValue("characteristicTX start");
+    characteristicRX->setValue("characteristicRX start");
+    // characteristicTX->notify();
+    // characteristicRX->notify();
+
     // Start the service
     myService->start();
 
