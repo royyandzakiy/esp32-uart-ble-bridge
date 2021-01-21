@@ -18,7 +18,7 @@
 #define CHARACTERISTIC_UUID_RX "4ac8a682-9736-4e5d-932b-e9b31405049c"
 #define CHARACTERISTIC_UUID_TX "0972EF8C-7613-4075-AD52-756F33D4DA91"
 
-HardwareSerial Log(1);
+HardwareSerial Log(0);
 HardwareSerial ArduinoSerial(2);
 
 NimBLEServer *myServer = NULL;
@@ -58,13 +58,17 @@ class CharacteristicRXCallback: public BLECharacteristicCallbacks {
 };
 
 void connectedTask(void *param) {
+    Log.print("connectedTask: Executing on core ");
+    Log.println(xPortGetCoreID());
+    
     for(;;) {
-        if (deviceConnected) {
+        if(ArduinoSerial.available()) {
+            // listen to any messages coming in from Arduino which is connected to the ESP32 through UART. Print received messages to Log and BLE Client
+            String message = ArduinoSerial.readStringUntil('\n');
+            Log.println(message);
+            
+            if (deviceConnected) {
             // do somthing when device is connected          
-            if(ArduinoSerial.available()) {
-                // listen to any messages coming in from Arduino which is connected to the ESP32 through UART. Print received messages to Log and BLE Client
-                String message = ArduinoSerial.readStringUntil('\n');
-                Log.println(message);
                 sendBLE(message);
             }
         }
@@ -88,19 +92,25 @@ extern "C" void app_main()
 {
     Log.begin(115200);
     ArduinoSerial.begin(115200);
-    
+    Log.print("Setup: Executing on core ");
+    Log.println(xPortGetCoreID());
+
     setupBLE();
+    int taskCore = 1;
+    xTaskCreatePinnedToCore(connectedTask, "connectedTask", 5000, NULL, 1, NULL, taskCore);
+
     Log.println("Setup done");
 
     while(1) loop();
 }
 
 void loop() {
-    if (deviceConnected) {
-        if (Serial.available()) {
-            // if user write anything in Serial Monitor, echo it to BLE Client
-            String message = Serial.readStringUntil('\n');
-            Log.println(message);
+    if (Log.available()) {
+        // if user write anything in Serial Monitor, echo it to BLE Client
+        String message = Log.readStringUntil('\n');
+        Log.println(message);
+        sendUART(message);
+        if (deviceConnected) {
             sendBLE(message);
         }
     }
@@ -120,7 +130,8 @@ void setupBLE() {
     // Create characteristicRX to receive messages from BLE Client (Android App)
     characteristicTX = myService->createCharacteristic(
                        CHARACTERISTIC_UUID_TX,
-                       NIMBLE_PROPERTY::NOTIFY
+                       NIMBLE_PROPERTY::READ    |
+                       NIMBLE_PROPERTY::NOTIFY  
                     );
     BLECharacteristic *characteristicRX = myService->createCharacteristic(
                         CHARACTERISTIC_UUID_RX,
@@ -132,8 +143,6 @@ void setupBLE() {
  
     // Start the service
     myService->start();
-
-    xTaskCreate(connectedTask, "connectedTask", 5000, NULL, 1, NULL);
 
     NimBLEAdvertising *myAdvertising = NimBLEDevice::getAdvertising();
     myAdvertising->addServiceUUID(myService->getUUID());
