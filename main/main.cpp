@@ -68,7 +68,8 @@ void connectedTask(void *param) {
             Log.println(message);
 
             if (deviceConnected) {
-            // do somthing when device is connected          
+            // do somthing when device is connected     
+                Log.println("sendBLE: " + message);     
                 sendBLE(message);
             }
         }
@@ -111,6 +112,7 @@ void loop() {
         Log.println(message);
         sendUART(message);
         if (deviceConnected) {
+            Log.println("sendBLE: " + message);
             sendBLE(message);
         }
     }
@@ -130,12 +132,10 @@ void setupBLE() {
     // Create characteristicRX to receive messages from BLE Client (Android App)
     characteristicTX = myService->createCharacteristic(
                        CHARACTERISTIC_UUID_TX,
-                       NIMBLE_PROPERTY::READ    |
                        NIMBLE_PROPERTY::NOTIFY  
                     );
     BLECharacteristic *characteristicRX = myService->createCharacteristic(
                         CHARACTERISTIC_UUID_RX,
-                        NIMBLE_PROPERTY::READ   |
                         NIMBLE_PROPERTY::WRITE  |
                         NIMBLE_PROPERTY::NOTIFY
                     );
@@ -143,11 +143,6 @@ void setupBLE() {
  
     characteristicRX->setCallbacks(new CharacteristicRXCallback()); // callbacks enable one to react of ble events such as characteristic write
  
-    characteristicTX->setValue("characteristicTX start");
-    characteristicRX->setValue("characteristicRX start");
-    // characteristicTX->notify();
-    // characteristicRX->notify();
-
     // Start the service
     myService->start();
 
