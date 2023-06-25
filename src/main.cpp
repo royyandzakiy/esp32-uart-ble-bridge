@@ -1,17 +1,7 @@
-
-/**
- * ESP32: UART-BLE Bridge
- * This is a simple project which uses and ESP32 to act as a bridge to communicate messages received from a UART sender towards a BLE Client receiver, and vice versa. 
- * 
- * Communication Diagram:
- * Arduino -- (UART) -- ESP32 -- (BLE) -- Android
- **/
-
 #include <Arduino.h>
 
 void connectedTask(void *);
 void setupBLE();
-void sendMsgBLE(String);
 void sendMsgUART(String);
 
 // Arduino -----------------------------
@@ -76,7 +66,6 @@ void connectedTask(void *param) {
                 // listen to any messages coming in from Arduino which is connected to the ESP32 through UART. Print received messages to Serial and BLE Client
                 String message = ArduinoSerial.readStringUntil('\n');
                 Serial.println(message);
-                sendMsgBLE(message);
             }
         }
         
@@ -128,12 +117,6 @@ void setupBLE() {
     myAdvertising->start();
 }
 
-void sendMsgBLE(String msg) {
-    const char *msgchar = msg.c_str();
-    characteristicTX->setValue(msgchar);
-    characteristicTX->notify();
-}
-
 // MAIN LOOP ---------------------------------
 
 void setup()
@@ -148,9 +131,9 @@ void setup()
 void loop() {
     if (isBleConnected) {
         if (Serial.available()) {
-            // if user write anything in Serial Monitor, echo it to BLE Client
+            // if user write anything in Serial Monitor, echo it to BLE Client and Arduino
             String message = Serial.readStringUntil('\n');
-            sendMsgBLE(message);
+            sendMsgUART(message);
             Serial.printf("Sent message: %s\n", message);
         }
     }
