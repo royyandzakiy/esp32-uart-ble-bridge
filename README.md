@@ -2,6 +2,8 @@
 
 This is a simple project which uses and ESP32 to act as a bridge to communicate messages received from a BLE Client (Android App) sender, to a UART connected device (Arduino) receiver. This does not provide the code for the Arduino in which will be connected to the ESP32. For the Android app, it is recommended to install the app [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp), and will act as the BLE Client.
 
+> Note: Currently this code only works one way, which is from the BLE Client (Android App) to this BLE Server (ESP32). This can though be extended by adding a fixing the TX characteristic within this BLE Server, to then provide a way to communicate back
+
 Communication Diagram:
 
 `Arduino --(UART)-- ESP32 --(BLE)-- Android`
