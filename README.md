@@ -8,7 +8,7 @@ Communication Diagram:
 
 ## Getting Started
 
-- Clone the repository `git clone https://github.com/royyandzakiy/espidf-arduino-bareminimum`
-- Go into the downloaded/cloned repo folder `cd espidf-arduino-bareminimum`
-- Download submodules `git submodule update --init --recursive`
+- `git clone https://github.com/royyandzakiy/esp32-uart-ble-bridge.git` Clone the repository 
+- `cd esp32-uart-ble-bridge` Go into the downloaded/cloned repo folder
+- `git submodule update --init --recursive` Download submodules 
 - Start exploring!
