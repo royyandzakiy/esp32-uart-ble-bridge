@@ -23,6 +23,9 @@ Communication Diagram:
 
 ## Communicate
 - Send Message from nRF Connect (Android BLE Client) to ESP32
+<details>
+<summary>images</summary>
 ![](docs/ble-client-send-1.jpeg)
 ![](docs/ble-client-send-2.jpeg)
 ![](docs/ble-server-recieve.jpeg)
+</details>
